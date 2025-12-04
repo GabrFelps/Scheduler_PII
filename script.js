@@ -1,3 +1,78 @@
+// --- LÓGICA DE LOGIN E CONEXÃO COM API ---
+const API_URL = 'http://localhost:3000';
+
+const loginSection = document.getElementById('login-section');
+const mainApp = document.getElementById('main-app');
+const loginMsg = document.getElementById('loginMessage');
+const loginUser = document.getElementById('loginUser');
+const loginPass = document.getElementById('loginPass');
+
+// Função para exibir erros no login
+function showLoginError(msg, isSuccess = false) {
+    loginMsg.textContent = msg;
+    loginMsg.style.display = 'block';
+    loginMsg.style.color = isSuccess ? 'green' : 'red';
+}
+
+// Evento Login
+document.getElementById('btnLogin').addEventListener('click', async () => {
+    const username = loginUser.value;
+    const password = loginPass.value;
+
+    if(!username || !password) return showLoginError("Preencha todos os campos");
+
+    try {
+        const response = await fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            // Login Sucesso: Esconde Login, Mostra App
+            loginSection.style.display = 'none';
+            mainApp.style.display = 'block';
+            loginUser.value = '';
+            loginPass.value = '';
+            loginMsg.style.display = 'none';
+        } else {
+            showLoginError(data.message);
+        }
+    } catch (error) {
+        showLoginError("Erro ao conectar com o servidor. O server.js está rodando?");
+    }
+});
+
+// Evento Registrar
+document.getElementById('btnRegister').addEventListener('click', async () => {
+    const username = loginUser.value;
+    const password = loginPass.value;
+
+    if(!username || !password) return showLoginError("Preencha para cadastrar");
+
+    try {
+        const response = await fetch(`${API_URL}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await response.json();
+        
+        showLoginError(data.message, data.success);
+    } catch (error) {
+        showLoginError("Erro ao conectar com o servidor.");
+    }
+});
+
+// Evento Logout
+document.getElementById('btnLogout').addEventListener('click', () => {
+    mainApp.style.display = 'none';
+    loginSection.style.display = 'block';
+});
+
+// --- FIM DA LÓGICA DE LOGIN ---
+
 class Task {
   constructor(id, descricao) {
     this.id = id;
@@ -39,7 +114,7 @@ class SchedulerADS {
     document.getElementById('removerTodasBtn').addEventListener('click', () => this.removerTodas());
 
     // Adicionar evento de clique no botão de dark mode
-    document.getElementById('darkToggle').addEventListener('click', this.toggleDarkMode)
+    document.getElementById('darkToggle').addEventListener('click', () => this.toggleDarkMode())
 
     // carrega preferência de tema
     if (localStorage.getItem('modo') === 'dark') document.body.classList.add('dark')
@@ -53,7 +128,7 @@ class SchedulerADS {
     localStorage.setItem('modo', document.body.classList.contains('dark') ? 'dark' : 'light');
   }
 
-  // Método para atualizar a mensagem de tarefas (se no momento não houver tarefas, exibe a mensagem de "Sem tarefas adicionadas.")
+  // Método para atualizar a mensagem de tarefas
   atualizarMensagem() {
     this.noTasksMessage.style.display = this.tabelaBody.children.length ? 'none' : 'block';
   }
@@ -64,7 +139,6 @@ class SchedulerADS {
     erro.style.display = 'block';
     erro.textContent = mensagem;
     
-    // Remove a mensagem de erro após 2 segundos
     setTimeout(() => {
       erro.style.display = 'none';
     }, 2000);
@@ -89,7 +163,6 @@ class SchedulerADS {
 
   // Método para criar uma linha na tabela para a tarefa
   criarLinhaTabela(tarefa) {
-    // Cria a linha da tabela
     const tr = document.createElement('tr')
     tr.id = `task-${tarefa.id}`
     tr.innerHTML = `
@@ -100,47 +173,38 @@ class SchedulerADS {
       <td></td>
     `
 
-    // Cria os botões de ação
-    // Botão de concluir
     const concluir = document.createElement('button')
     concluir.className = 'action-btn'
     concluir.title = 'Concluir'
     concluir.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 16.17 4.83 12 3.41 13.41 9 19 21 7 19.59 5.59 9 16.17Z"/></svg>'
     concluir.addEventListener('click', () => this.marcarConcluida(tarefa.id))
 
-    // Botão de excluir
     const excluir = document.createElement('button')
     excluir.className = 'action-btn'
     excluir.title = 'Excluir'
     excluir.innerHTML = '<svg viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12ZM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4Z"/></svg>'
     excluir.addEventListener('click', () => this.remover(tarefa.id))
 
-    // Botão de editar
     const editar = document.createElement('button')
     editar.className = 'action-btn'
     editar.title = 'Editar'
     editar.innerHTML = '<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>'
     editar.addEventListener('click', () => this.editar(tarefa.id))
 
-    // Adiciona os botões à linha da tabela
     tr.lastElementChild.append(concluir, excluir, editar)
     this.tabelaBody.appendChild(tr)
 
-    // Incrementa o ID da tarefa
     this.idAtual++
     this.atualizarMensagem()
   }
 
-  // Método para marcar uma tarefa como concluída ou "desconcluir" ela
   marcarConcluida(id) {
     const tarefa = this.listaTarefas.find(tarefa => tarefa.id === id)
     tarefa.concluir()
 
-    // Seleciona a linha da tabela
     const tr = document.getElementById(`task-${id}`)
     const statusTd = tr.querySelector('.status')
 
-    // Aplica um estilo para a tarefa concluída, ou remove-o se for desconcluida
     if (tarefa.concluida) {
       statusTd.textContent = new Date().toLocaleDateString()
       statusTd.style.color = '#90ee90'
@@ -152,7 +216,6 @@ class SchedulerADS {
     }
   }
   
-  // Método para remover uma tarefa
   remover(id) {
     const tarefa = this.listaTarefas.find(tarefa => tarefa.id === id)
     if (tarefa.concluida) {
@@ -163,14 +226,13 @@ class SchedulerADS {
   }
 
   removerTodas() {
-    this.fecharModal(); // Fecha qualquer modal aberto
+    this.fecharModal(); 
 
-    if (this.listaTarefas.length === 0) {	
+    if (this.listaTarefas.length === 0) { 
       this.exibirErro('Não há tarefas para remover.')
       return;
     }
 
-    // Exibe uma janela de confirmação antes de remover todas as tarefas
     const modal = document.createElement('div');
     modal.id = 'removeAllConfirmModal';
     modal.className = 'modal-overlay';
@@ -182,20 +244,19 @@ class SchedulerADS {
       </div>
     `;
 
-    // Adiciona esse modal à janela
     this.modalContainer.appendChild(modal);
-    modal.style.display = 'flex'; // Faz ele aparecer
+    modal.style.display = 'flex'; 
     document.getElementById('confirmRemoveAllBtn').onclick = () => {
-      this.tabelaBody.innerHTML = ''; // Limpa a tabela
-      this.listaTarefas = []; // Limpa a lista de tarefas
-      this.atualizarMensagem(); // Atualiza a mensagem de tarefas
-      this.fecharModal(); // Fecha o modal
+      this.tabelaBody.innerHTML = ''; 
+      this.listaTarefas = []; 
+      this.atualizarMensagem(); 
+      this.fecharModal(); 
     };
+    document.getElementById('cancelRemoveAllBtn').onclick = () => this.fecharModal();
   }
 
-  // Mostra a janela de confirmação de exclusão de tarefa
   mostrarModalExclusao(id) {
-    this.fecharModal(); // Fecha o modal para evitar problemas
+    this.fecharModal(); 
     this.taskIdToDelete = id;
     const modal = document.createElement('div');
     modal.id = 'deleteConfirmModal';
@@ -208,14 +269,12 @@ class SchedulerADS {
       </div>
     `;
 
-    // Adiciona esse modal à janela
     this.modalContainer.appendChild(modal);
     modal.style.display = 'flex';
     document.getElementById('confirmDeleteBtn').onclick = () => this.confirmarExclusao();
     document.getElementById('cancelDeleteBtn').onclick = () => this.fecharModal();
   }
 
-  // Mostra a janela de edição de tarefa
   mostrarModalEdicao(id) {
     this.fecharModal();
     this.taskIdToEdit = id;
@@ -234,22 +293,19 @@ class SchedulerADS {
       </div>
     `;
 
-    // Adiciona esse modal à janela
     this.modalContainer.appendChild(modal);
-    modal.style.display = 'flex'; // Faz ele aparecer
+    modal.style.display = 'flex'; 
     document.getElementById('saveEditBtn').onclick = () => this.confirmarEdicao();
     document.getElementById('cancelEditBtn').onclick = () => this.fecharModal();
     setTimeout(() => document.getElementById('editTaskInput').focus(), 100);
   }
 
-  // Fecha qualquer janela de confirmação
   fecharModal() {
     this.modalContainer.innerHTML = '';
     this.taskIdToDelete = null;
     this.taskIdToEdit = null;
   }
 
-  // Confirma a exclisão de uma tarefa
   confirmarExclusao() {
     if (this.taskIdToDelete !== null) {
       document.getElementById(`task-${this.taskIdToDelete}`).remove();
@@ -260,23 +316,19 @@ class SchedulerADS {
     this.fecharModal();
   }
 
-  // Método para editar uma tarefa
   editar(id) {
     this.mostrarModalEdicao(id);
   }
 
-  // Confirma as edições feitas na tarefa	
   confirmarEdicao() {
-    // Verifica se tem uma tarefa para editar
     if (this.taskIdToEdit !== null) {
       const tarefa = this.listaTarefas.find(tarefa => tarefa.id === this.taskIdToEdit);
       const input = document.getElementById('editTaskInput');
       const novaDescricao = input.value.trim();
-      input.value = ''; // Limpa o campo de entrada
+      input.value = ''; 
 
       if (tarefa && novaDescricao) {
         tarefa.editar(novaDescricao);
-        // Atualiza a linha na tabela
         const tr = document.getElementById(`task-${tarefa.id}`);
         if (tr) tr.children[1].textContent = novaDescricao;
       }
