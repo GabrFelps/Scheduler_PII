@@ -3,17 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lista de Tarefas</title>
+  <title>Lista de Tarefas - Login</title>
   <link rel="stylesheet" href="styles.css">
   <script src="script.js" defer></script>
 </head>
 <body>
-  <!-- Botão modo escuro -->
   <button id="darkToggle" class="dark-toggle" title="Alternar modo escuro">🌙</button>
 
-  <!-- Área principal -->
-  <div class="container">
-    <h1>Lista de Tarefas</h1>
+  <div id="login-section" class="card" style="padding: 2rem; max-width: 400px; margin-top: 10vh;">
+    <div class="card-header" style="justify-content: center; border: none;">
+        <h2>Acesso ao Sistema</h2>
+    </div>
+    <div class="card-body">
+        <div id="input-section">
+            <label for="loginUser">Usuário</label>
+            <input type="text" id="loginUser" placeholder="Digite seu usuário">
+            
+            <label for="loginPass" style="margin-top: 10px;">Senha</label>
+            <input type="password" id="loginPass" placeholder="Digite sua senha">
+        </div>
+        
+        <p id="loginMessage" style="color: red; text-align: center; display: none; margin-top: 10px;"></p>
+
+        <button id="btnLogin" class="primary-btn" style="width: 100%;">Entrar</button>
+        <button id="btnRegister" class="primary-btn" style="width: 100%; background-color: #6b7280; margin-top: 5px;">Criar Conta</button>
+    </div>
+  </div>
+  <div class="container" id="main-app" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>Lista de Tarefas</h1>
+        <button id="btnLogout" class="action-btn" style="font-size: 0.8rem; border: 1px solid currentColor; border-radius: 5px;">Sair</button>
+    </div>
 
     <div id="input-section">
       <label for="descricaoTarefa">Escreva uma nova tarefa:</label>
